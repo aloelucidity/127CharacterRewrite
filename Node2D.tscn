@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://character/character.tscn" type="PackedScene" id=1]
+[ext_resource path="res://StaticBody2D.gd" type="Script" id=2]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Character" parent="." instance=ExtResource( 1 )]
+position = Vector2( -11, 159 )
+
+[node name="Camera2D" type="Camera2D" parent="Character"]
+current = true
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+script = ExtResource( 2 )
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D"]
+polygon = PoolVector2Array( -590, 108, -435, 186, -407, 116, -349, 128, -371, 209, -292, 243, -99, 277, -84, 165, 22, 170, 45, 193, 60, 263, 106, 303, 298, 119, 635, 146, 796, 343, 800, 423, 719, 504, -186, 548, -818, 417, -714, -32, -539, -6 )
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="StaticBody2D"]
+position = Vector2( -357, 92 )
+build_mode = 1
+polygon = PoolVector2Array( -65, -30, 54, -10, 52, -3, -66, -24 )
+one_way_collision = true
