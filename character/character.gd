@@ -20,7 +20,7 @@ var facing_direction: int
 
 
 func is_grounded() -> bool:
-	return collision.floor_info[0]
+	return collision.floor_info["is_colliding"]
 
 
 func _physics_process(delta: float):

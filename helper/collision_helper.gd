@@ -1,10 +1,5 @@
 class_name CollisionHelper
 
-const IS_COLLIDING: int = 0
-const CONTACT_POINT: int = 1
-const EDGE_NORMAL: int = 2
-const RESOLUTION_OFFSET: int = 3
-
 
 static func get_line_intersection(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2) -> Array:
 	var intersection = Geometry.segment_intersects_segment_2d(p0, p1, p2, p3)
