@@ -216,6 +216,9 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 	else:
 		push_error("what exactly did we collide with...?")
 	
+	for i in range(polygon.size()):
+		polygon[i] = collision_shape.transform.xform(polygon[i])
+	
 	# dont change length of the checks if you're moving with the terrain
 #		if found_transform == null:
 #			cast_to_transform = Transform2D(0, 

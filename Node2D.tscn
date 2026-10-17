@@ -35,5 +35,5 @@ position = Vector2( -482, 113 )
 shape = SubResource( 2 )
 
 [node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2( -146, 243 )
+position = Vector2( -146, 257 )
 shape = SubResource( 3 )
