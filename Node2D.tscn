@@ -15,7 +15,7 @@ b = Vector2( 1, -50 )
 [node name="Node2D" type="Node2D"]
 
 [node name="Character" parent="." instance=ExtResource( 1 )]
-position = Vector2( -11, 59 )
+position = Vector2( 621, 133 )
 
 [node name="Camera2D" type="Camera2D" parent="Character"]
 current = true

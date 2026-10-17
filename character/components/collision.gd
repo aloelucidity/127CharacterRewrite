@@ -26,23 +26,24 @@ var found_transform = null
 var last_transform = null
 ##
 
-const FLOOR_THRESHOLD: float = 0.5
+const FLOOR_THRESHOLD: float = 0.7
 const GROUND_GRACE: float = 0.5
 
 
 func edge_from_normal(normal: Vector2) -> Vector2:
-	# if edge is a floor
-	if normal.y <= -FLOOR_THRESHOLD:
-		return Vector2.UP
-	# if edge is a ceiling
-	elif normal.y >= FLOOR_THRESHOLD:
-		return Vector2.DOWN
-	else:
+	# if edge is horizontal
+	if abs(normal.y) < FLOOR_THRESHOLD:
 		# pointing right or left?
 		if normal.x > 0:
 			return Vector2.RIGHT
 		else:
 			return Vector2.LEFT
+	else:
+		# pointing down or up?
+		if normal.y > 0:
+			return Vector2.DOWN
+		else:
+			return Vector2.UP
 
 
 func update_collision(delta: float) -> void:
@@ -71,10 +72,10 @@ func update_collision(delta: float) -> void:
 	var resolved_position := character.position
 	var resolved_velocity := character.velocity
 	
-	resolved_velocity = resolve_velocity(left_info, resolved_velocity, Vector2.LEFT)
-	resolved_velocity = resolve_velocity(right_info, resolved_velocity, Vector2.RIGHT)
-	resolved_velocity = resolve_velocity(ceiling_info, resolved_velocity, Vector2.UP)
-	resolved_velocity = resolve_velocity(floor_info, resolved_velocity, Vector2.DOWN)
+	resolved_velocity = resolve_velocity(delta, left_info, resolved_velocity, Vector2.LEFT)
+	resolved_velocity = resolve_velocity(delta, right_info, resolved_velocity, Vector2.RIGHT)
+	resolved_velocity = resolve_velocity(delta, ceiling_info, resolved_velocity, Vector2.UP)
+	resolved_velocity = resolve_velocity(delta, floor_info, resolved_velocity, Vector2.DOWN)
 	
 	character.velocity = resolved_velocity
 	
@@ -110,22 +111,21 @@ func handle_platform_transforms() -> void:
 	found_transform = null
 
 
-func resolve_velocity(intersect_info: Array, current_velocity: Vector2, ray_direction: Vector2) -> Vector2:
+func resolve_velocity(delta: float, intersect_info: Array, current_velocity: Vector2, ray_direction: Vector2) -> Vector2:
 	if not intersect_info[CollisionHelper.IS_COLLIDING]: 
 		return current_velocity
 	
 	var dir_absolute: Vector2 = ray_direction.abs() 
 	var dir_inverted := Vector2.ONE - dir_absolute
-	
 	var preserved_velocity: Vector2 = dir_inverted * current_velocity
-	var clamped_velocity: Vector2 = dir_absolute * current_velocity
 	
-	if (ray_direction.x != 0 and sign(clamped_velocity.x) == -sign(ray_direction.x)) \
-	or (ray_direction.y != 0 and sign(clamped_velocity.y) == -sign(ray_direction.y)):
+	# lets not stop the player if theyre moving towards where the ray is pointing
+	var normal: Vector2 = intersect_info[CollisionHelper.EDGE_NORMAL]
+	if (current_velocity * delta).dot(normal) > 2.0:
 		intersect_info[CollisionHelper.IS_COLLIDING] = false
 		return current_velocity
 	
-	return preserved_velocity + Vector2.ZERO
+	return preserved_velocity
 
 
 func resolve_position(delta: float, intersect_info: Array, current_position: Vector2, ray_direction: Vector2) -> Vector2:
@@ -171,6 +171,7 @@ func ray_array_check(delta: float, space_state: Physics2DDirectSpaceState, expec
 				intersecting = true
 				closest_distance = distance
 				intersection = ray_intersection
+	
 	return intersection
 
 
@@ -187,7 +188,12 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 	var global_point: Vector2 = point + character.global_position
 	var global_point_open: Vector2 = point_open + character.global_position
 	var global_cast_to: Vector2 = cast_to + character.global_position
-	global_cast_to += character.velocity * delta
+	
+	#var predict_mask: Vector2 = expected_normal.abs()
+	# predict_mask == Vector2.ZERO:
+	#	predict_mask = Vector2(1, 1)
+	
+	#global_cast_to += character.velocity * predict_mask * delta
 	
 	# use the built in raycasts first to find collider to work with
 	var hit_result: Dictionary = space_state.intersect_ray(global_point, global_cast_to, [character], character.collision_mask)
@@ -217,7 +223,7 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 		push_error("what exactly did we collide with...?")
 	
 	for i in range(polygon.size()):
-		polygon[i] = collision_shape.transform.xform(polygon[i])
+		polygon[i] = collision_shape.global_transform.xform(polygon[i])
 	
 	# dont change length of the checks if you're moving with the terrain
 #		if found_transform == null:
@@ -229,13 +235,11 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 	working_cast_to = global_cast_to
 	working_point = global_point if is_closed else global_point_open
 	
-	var index: int = 0
-	for vertex in polygon:
-		if index == 0 and not is_closed:
-			index += 1
-			continue
-			
-		var prev: Vector2 = polygon[index - 1]
+	var count: int = polygon.size()
+	var edge_count: int = count if is_closed else count - 1
+	for index in range(edge_count):
+		var vertex: Vector2 = polygon[(index + 1) % count]
+		var prev: Vector2 = polygon[index]
 		var diff: Vector2 = vertex - prev
 		var normal: Vector2 = Vector2(diff.y, -diff.x).normalized()
 		
@@ -244,9 +248,8 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 			vertex,
 			normal
 		])
-
+		
 		if expected_normal != Vector2.ZERO and not edge_from_normal(normal).is_equal_approx(expected_normal):
-			index += 1
 			continue
 		
 		var line_intersection: Array = CollisionHelper.get_line_intersection(
@@ -266,8 +269,6 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 				origin
 			]
 			return intersection
-		
-		index += 1
 	return [false]
 
 
