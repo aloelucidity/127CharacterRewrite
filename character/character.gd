@@ -16,9 +16,7 @@ const GRAVITY: float = 7.82
 onready var collision = $"%Collision"
 
 var velocity: Vector2
-var snap: Vector2
 var facing_direction: int
-var jumping: bool
 
 
 func is_grounded() -> bool:
@@ -63,11 +61,7 @@ func _physics_process(delta: float):
 		velocity.y += GRAVITY * 2
 	velocity.y = min(velocity.y, max_aerial_velocity)
 	
-	if is_grounded() and Input.is_action_just_pressed("ui_accept"):
+	if Input.is_action_just_pressed("ui_accept"):
 		velocity.y = -400
-		jumping = true
-	if jumping and velocity.y >= 0:
-		jumping = false
 	
-	snap = Vector2(0, 6) if not jumping else Vector2.ZERO
 	collision.update_collision(delta)

@@ -64,7 +64,7 @@ func ray_setup(direction: Vector2, origin: Vector2, sink: float, casts: int, sid
 	
 	# distributes rays equally
 	for cast in range(casts):
-		var step: float = cast / (casts - 1)
+		var step: float = float(cast) / (float(casts) - 1)
 		var offset: float = lerp(-side_length, side_length, step)
 		
 		# fill zeroes with the new offset position
