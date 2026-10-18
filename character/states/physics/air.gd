@@ -59,6 +59,12 @@ func _update(_delta: float) -> void:
 		do_friction()
 
 
+## runs once when this state stops being active
+func _on_exit() -> void:
+	animation = "fall"
+	anim_is_directional = true
+
+
 ### Transitions
 
 ## runs this check every frame while inactive and 

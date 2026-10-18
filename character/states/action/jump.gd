@@ -3,6 +3,10 @@ extends ActionState
 
 
 export(Array, float) var jump_powers
+export(Array, String) var jump_animations
+export(Array, bool) var jump_is_directional
+export(Array, String) var fall_animations
+export(Array, bool) var fall_is_directional
 export var triple_jump_threshold: float
 export var triple_jump_path: NodePath
 export var air_path: NodePath
@@ -22,6 +26,7 @@ const HEIGHT_MULT: float = 0.7
 ## runs once when this state begins being active
 func _on_enter() -> void:
 	jump_released = false
+	character.override_timer = 0
 	
 	## triple jump
 	if jump_sequence >= max_jumps - 1 and abs(character.velocity.x) > triple_jump_threshold:
@@ -30,8 +35,15 @@ func _on_enter() -> void:
 		reset_timer = 0
 	## single and double jump
 	else:
+		animation = jump_animations[jump_sequence]
+		anim_is_directional = jump_is_directional[jump_sequence]
+		
+		var air_physics: PhysicsState = get_node(air_path)
+		air_physics.animation = fall_animations[jump_sequence]
+		air_physics.anim_is_directional = fall_is_directional[jump_sequence]
+		
 		jump_sequence = min(jump_sequence, max_jumps - 2)
-		character.set_state("physics", get_node(air_path))
+		character.set_state("physics", air_physics)
 		character.velocity.y = min(-jump_powers[jump_sequence], character.velocity.y)
 	
 	jump_sequence += 1
@@ -69,7 +81,7 @@ func _general_update(delta: float) -> void:
 ## runs this check every frame while inactive and 
 ## in the character's current pool of states
 func _startup_check() -> bool:
-	return pressed_buffer > 0 and character.velocity.y >= -3 and character.is_grounded()
+	return pressed_buffer > 0
 
 
 ## runs this check every frame while active

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://character/character.gd" type="Script" id=1]
 [ext_resource path="res://character/components/ray_setup.gd" type="Script" id=2]
@@ -9,15 +9,18 @@
 [ext_resource path="res://helper/property_watcher.gd" type="Script" id=7]
 [ext_resource path="res://character/states/action/triple_jump.gd" type="Script" id=8]
 [ext_resource path="res://character/states/physics/somersault.gd" type="Script" id=9]
+[ext_resource path="res://character/assets/mario/frames.tres" type="SpriteFrames" id=10]
+[ext_resource path="res://character/components/animator.gd" type="Script" id=11]
 
 [node name="Character" type="KinematicBody2D"]
 script = ExtResource( 1 )
 base_size = Vector2( 12, 27 )
 
-[node name="ColorRect" type="ColorRect" parent="."]
-margin_left = -6.0
-margin_top = -27.0
-margin_right = 6.0
+[node name="Animator" type="AnimatedSprite" parent="."]
+position = Vector2( 0, -24 )
+frames = ExtResource( 10 )
+animation = "idle"
+script = ExtResource( 11 )
 
 [node name="Components" type="Node2D" parent="."]
 
@@ -42,6 +45,7 @@ corner_height = 8.0
 [node name="Air" type="Node" parent="PhysicsStates"]
 script = ExtResource( 4 )
 animation = "fall"
+anim_is_directional = true
 move_speed = 216.0
 acceleration = 16.0
 overshoot_speed = 0.25
@@ -51,7 +55,7 @@ ground_name = "Ground"
 
 [node name="Somersault" type="Node" parent="PhysicsStates"]
 script = ExtResource( 9 )
-animation = "fall"
+sprite_skew = null
 move_speed = 216.0
 acceleration = 10.0
 overshoot_speed = 0.25
@@ -62,6 +66,7 @@ air_name = "Air"
 
 [node name="Ground" type="Node" parent="PhysicsStates"]
 script = ExtResource( 5 )
+animation = "idle"
 move_speed = 216.0
 acceleration = 16.0
 turn_speed = 30.0
@@ -71,8 +76,13 @@ air_name = "Air"
 
 [node name="JumpAction" type="Node" parent="PhysicsStates/Ground"]
 script = ExtResource( 6 )
+animation = "jump_right"
 disable_snap = true
 jump_powers = [ 350.0, 425.0 ]
+jump_animations = [ "jump", "double_jump" ]
+jump_is_directional = [ true, false ]
+fall_animations = [ "fall", "double_jump_fall" ]
+fall_is_directional = [ true, false ]
 triple_jump_threshold = 80.0
 triple_jump_path = NodePath("../TripleJumpAction")
 air_path = NodePath("../../Air")
@@ -81,6 +91,8 @@ max_jumps = 3
 
 [node name="TripleJumpAction" type="Node" parent="PhysicsStates/Ground"]
 script = ExtResource( 8 )
+animation = "triple_jump"
+sprite_skew = null
 disable_snap = true
 launch_power = 100.0
 jump_power = 495.0
@@ -90,8 +102,8 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_top = -27.0
-margin_bottom = -27.0
+margin_top = -92.0
+margin_bottom = -42.0
 grow_horizontal = 2
 grow_vertical = 0
 

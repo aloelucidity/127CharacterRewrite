@@ -13,11 +13,12 @@ export var override_size: bool
 export var custom_size: Vector2
 
 export var animation: String
+export var anim_speed: float = 1
 export var sprite_offset: Vector2
 export var sprite_rot: float
-export var sprite_skew: float
 export var sprite_scale := Vector2.ONE
 
+export var anim_is_directional: bool
 export var disable_snap: bool
 
 

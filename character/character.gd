@@ -4,7 +4,7 @@ extends KinematicBody2D
 
 ### Basics
 var velocity: Vector2
-var facing_direction: int
+var facing_direction: int = 1
 var gravity: float = 7.82
 
 ### Attributes
@@ -12,8 +12,9 @@ export var gravity_factor: float = 1
 export var base_size: Vector2
 
 ### Nodes
-onready var collider = $"%Collider"
-onready var physics_states = $PhysicsStates
+onready var collider: Node2D = $"%Collider"
+onready var animator: AnimatedSprite = $Animator
+onready var physics_states: Node = $PhysicsStates
 
 ### States
 var physics: PhysicsState
@@ -23,7 +24,7 @@ var action: ActionState
 # to the air state, it'll set an override for a few frames so you
 # can still do ground actions even if you're slightly late
 var container_override: PhysicsState
-var override_timer: int
+var override_timer: float
 
 ### Inputs
 enum input_names {
@@ -67,13 +68,15 @@ func _physics_process(delta: float):
 	
 	var container: PhysicsState = physics
 	if override_timer > 0:
-		override_timer -= 1
+		override_timer -= delta
 		container = container_override
-		if override_timer <= 0: container_override = null
+	if override_timer <= 0: 
+		container_override = null
 	
 	update_states(delta, "action", container)
 	
 	collider._update(delta)
+	animator._update(delta)
 
 
 ### States
@@ -155,6 +158,18 @@ func update_states(delta: float, type: String, container: Node) -> void:
 ### Collision queries
 func is_grounded() -> bool:
 	return collider.floor_info["is_colliding"]
+
+func is_ceiling() -> bool:
+	return collider.ceiling_info["is_colliding"]
+
+func is_walled() -> bool:
+	return is_walled_left() or is_walled_right()
+
+func is_walled_left() -> bool:
+	return collider.left_info["is_colliding"]
+
+func is_walled_right() -> bool:
+	return collider.right_info["is_colliding"]
 
 
 ### Physics

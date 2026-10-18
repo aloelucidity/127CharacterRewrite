@@ -11,6 +11,8 @@ export var friction: float
 export var set_facing: bool = true
 export var air_name: String
 
+export var idle_threshold: float
+
 
 ### Main logic
 
@@ -52,6 +54,19 @@ func _update(_delta: float) -> void:
 	else:
 		do_friction()
 	
+	## Animation
+	var current_speed: float = abs(character.velocity.x)
+	if current_speed > idle_threshold and not character.is_walled():
+		anim_speed = 1
+		if current_speed > move_speed:
+			anim_speed = current_speed / move_speed
+		animation = "walk"
+	else:
+		anim_speed = 1
+		animation = "idle"
+	
+	## Coyote time
+	character.container_override = self
 	character.override_timer = 0.125
 
 
