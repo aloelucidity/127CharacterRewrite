@@ -3,7 +3,7 @@ extends Node2D
 
 
 const FLOOR_THRESHOLD: float = 0.7
-const GROUND_GRACE: float = 0.5
+const COLLISION_GRACE: float = 0.5
 # defined in pixels
 const MAX_STEP_DISTANCE: float = 5.0
 
@@ -76,15 +76,15 @@ func update_collision(delta: float) -> void:
 func update_step(delta: float, space_state: Physics2DDirectSpaceState) -> void:
 	## RAY CHECKS
 	# snapping further when going down on a slope
-	var slope_offset: float = GROUND_GRACE
+	var slope_offset: float = COLLISION_GRACE
 	if floor_info["is_colliding"] and character.velocity.x != 0:
 		slope_offset = abs(character.velocity.x) * delta * (1.0 - floor_info["edge_normal"].y)
-		slope_offset = max(GROUND_GRACE, slope_offset)
+		slope_offset = max(COLLISION_GRACE, slope_offset)
 	
 	# you only want to collide if the face is pointing away
-	left_info = ray_array_check(delta, space_state, Vector2.RIGHT, left_rays)
-	right_info = ray_array_check(delta, space_state, Vector2.LEFT, right_rays)
-	ceiling_info = ray_array_check(delta, space_state, Vector2.DOWN, ceiling_rays)
+	left_info = ray_array_check(delta, space_state, Vector2.RIGHT, left_rays, Vector2(-COLLISION_GRACE, 0))
+	right_info = ray_array_check(delta, space_state, Vector2.LEFT, right_rays, Vector2(COLLISION_GRACE, 0))
+	ceiling_info = ray_array_check(delta, space_state, Vector2.DOWN, ceiling_rays, Vector2(0, -COLLISION_GRACE))
 	floor_info = ray_array_check(delta, space_state, Vector2.UP, floor_rays, Vector2(0, slope_offset))
 	
 	## APPLY VELOCITY
