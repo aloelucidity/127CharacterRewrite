@@ -41,7 +41,7 @@ func do_friction() -> void:
 
 
 ## runs every frame while active
-func _update() -> void:
+func _update(_delta: float) -> void:
 	## Gravity
 	var total_gravity: float = character.get_gravity_sum()
 	character.velocity.y += total_gravity

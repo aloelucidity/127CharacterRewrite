@@ -1,4 +1,4 @@
-class_name MovementPhysics
+class_name GroundPhysics
 extends PhysicsState
 
 
@@ -39,7 +39,7 @@ func do_friction() -> void:
 
 
 ## runs every frame while active
-func _update() -> void:
+func _update(_delta: float) -> void:
 	## Movement
 	var move_dir: int = 0
 	if character.inputs[Character.input_names.left][0]: 
@@ -51,6 +51,8 @@ func _update() -> void:
 		do_movement(move_dir)
 	else:
 		do_friction()
+	
+	character.override_timer = 0.125
 
 
 ### Transitions

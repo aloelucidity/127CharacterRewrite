@@ -18,7 +18,7 @@ export var sprite_rot: float
 export var sprite_skew: float
 export var sprite_scale := Vector2.ONE
 
-export var disable_snap: bool = true
+export var disable_snap: bool
 
 
 # can't be type hinted because UGH cyclic dependency
@@ -41,7 +41,7 @@ func _transition_check() -> String:
 
 
 ## runs every frame while active
-func _update() -> void:
+func _update(_delta: float) -> void:
 	pass
 
 
@@ -56,5 +56,5 @@ func _on_exit() -> void:
 
 
 ## always runs no matter what, before any of the other functions
-func _general_update() -> void:
+func _general_update(_delta: float) -> void:
 	pass

@@ -77,7 +77,7 @@ func _update_step(delta: float, space_state: Physics2DDirectSpaceState) -> void:
 	## RAY CHECKS
 	# snapping further when going down on a slope
 	var slope_offset: float = COLLISION_GRACE
-	if floor_info["is_colliding"] and character.velocity.x != 0:
+	if floor_info["is_colliding"] and character.can_snap() and character.velocity.x != 0:
 		slope_offset = abs(character.velocity.x) * delta * (1.0 - floor_info["edge_normal"].y)
 		slope_offset = max(COLLISION_GRACE, slope_offset)
 	

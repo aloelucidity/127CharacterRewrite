@@ -23,7 +23,7 @@ var action: ActionState
 # to the air state, it'll set an override for a few frames so you
 # can still do ground actions even if you're slightly late
 var container_override: PhysicsState
-var override_frames: int
+var override_timer: int
 
 ### Inputs
 enum input_names {
@@ -62,23 +62,18 @@ func _ready():
 func _physics_process(delta: float):
 	update_inputs()
 	
-	handle_general_updates()
-	update_states("physics", physics_states)
+	handle_general_updates(delta)
+	update_states(delta, "physics", physics_states)
 	
 	var container: PhysicsState = physics
-	if override_frames > 0:
-		override_frames -= 1
+	if override_timer > 0:
+		override_timer -= 1
 		container = container_override
-		if override_frames <= 0: container_override = null
+		if override_timer <= 0: container_override = null
 	
-	update_states("action", container)
+	update_states(delta, "action", container)
 	
 	collider._update(delta)
-
-
-### Collision queries
-func is_grounded() -> bool:
-	return collider.floor_info["is_colliding"]
 
 
 ### States
@@ -115,10 +110,10 @@ func check_startups(cur_state: State, container: Node) -> State:
 	return null
 
 
-func handle_general_updates() -> void:
+func handle_general_updates(delta: float) -> void:
 	if is_instance_valid(physics_states):
 		for phys in physics_states.get_children():
-			phys._general_update()
+			phys._general_update(delta)
 			
 			for act in phys.get_children():
 				var action_state: ActionState
@@ -127,16 +122,16 @@ func handle_general_updates() -> void:
 				elif act is StateLink:
 					var link: StateLink = act
 					action_state = link.link_to
-				action_state._general_update()
+				action_state._general_update(delta)
 
 
-func update_states(type: String, container: Node) -> void:
+func update_states(delta: float, type: String, container: Node) -> void:
 	## handle updates, transitions
 	var cur_state: State = self[type]
 	if is_instance_valid(cur_state):
 		var transition_to: String = cur_state._transition_check()
 		if transition_to == cur_state.name:
-			cur_state._update()
+			cur_state._update(delta)
 		elif is_instance_valid(container) and container.has_node(transition_to):
 			var found_node: Node = container.get_node(transition_to)
 			var new_state: State
@@ -157,9 +152,15 @@ func update_states(type: String, container: Node) -> void:
 			set_state(type, startup_state)
 
 
+### Collision queries
+func is_grounded() -> bool:
+	return collider.floor_info["is_colliding"]
+
+
 ### Physics
 func get_gravity_sum() -> float:
-	var total_factor: float = gravity * gravity_factor
+	# yeah, for some reason gravity is twice as strong as advertised in 127
+	var total_factor: float = gravity * 2 * gravity_factor
 	if is_instance_valid(physics):
 		total_factor *= physics.gravity_factor
 	if is_instance_valid(action):
@@ -172,3 +173,10 @@ func get_size() -> Vector2:
 	if is_instance_valid(physics) and physics.override_size:
 		return physics.custom_size
 	return base_size
+
+func can_snap() -> bool:
+	if is_instance_valid(action):
+		return not action.disable_snap
+	if is_instance_valid(physics):
+		return not physics.disable_snap
+	return true
