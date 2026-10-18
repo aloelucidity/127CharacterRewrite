@@ -1,6 +1,5 @@
 extends Node2D
 
-const SINK_OPEN: float = 1.0
 const CEILING_NORMAL := Vector2(0, -1)
 const FLOOR_NORMAL := Vector2(0, 1)
 const LEFT_NORMAL := Vector2(-1, 0)
@@ -80,15 +79,11 @@ func ray_setup(direction: Vector2, origin: Vector2, sink: float, casts: int, sid
 	return ray_array
 
 
-func dir_to_points(direction: Vector2, origin: Vector2, sink: float, extend: float, sink_open: float = SINK_OPEN) -> Array:
+func dir_to_points(direction: Vector2, origin: Vector2, sink: float, extend: float) -> Array:
 	var point: Vector2 = origin
 	point -= direction * sink
 	
 	var cast_to: Vector2 = origin
 	cast_to += direction * extend
 	
-	# open shapes (one ways) have shorter raycasts to reduce the "teleporting" effect
-	var point_open: Vector2 = origin
-	point_open -= direction * sink_open
-	
-	return [point, cast_to, origin, point_open, direction]
+	return [point, cast_to, origin, direction]

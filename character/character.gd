@@ -62,6 +62,8 @@ func _physics_process(delta: float):
 	velocity.y = min(velocity.y, max_aerial_velocity)
 	
 	if Input.is_action_just_pressed("ui_accept"):
-		velocity.y = -400
+		velocity.y = -500
+	elif Input.is_action_just_released("ui_accept"):
+		velocity.y *= 0.63
 	
 	collision.update_collision(delta)

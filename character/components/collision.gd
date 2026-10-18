@@ -29,6 +29,7 @@ var left_info: Dictionary = {"is_colliding": false}
 var right_info: Dictionary = {"is_colliding": false}
 var found_transform = null
 var last_transform = null
+var last_position: Vector2
 ##
 
 
@@ -65,6 +66,8 @@ func update_collision(delta: float) -> void:
 	
 	for i in range(steps):
 		update_step(sub_delta, space_state)
+	
+	last_position = character.global_position
 	
 	if draw_debug:
 		update() # redraw
@@ -177,7 +180,7 @@ func resolve_position(delta: float, intersect_info: Dictionary, current_position
 		target_pos.x = min(target_pos.x, current_position.x)
 	elif ray_direction.x < 0:
 		target_pos.x = max(target_pos.x, current_position.x)
-		
+	
 	if ray_direction.y > 0:
 		# well, okay, we can go down a liiittle bit. but only as much as the slope offset times 2 :3
 		var max_allowed_y: float = current_position.y + max(0.0, slope_offset.y * 2)
@@ -197,7 +200,7 @@ func ray_array_check(delta: float, space_state: Physics2DDirectSpaceState, expec
 	var closest_distance: float = 0.0
 	
 	for ray in ray_array:
-		var ray_intersection: Dictionary = ray_check(delta, space_state, expected_normal, ray[0], ray[1] + extend, ray[2], ray[3])
+		var ray_intersection: Dictionary = ray_check(delta, space_state, expected_normal, ray[0], ray[1] + extend, ray[2])
 		if ray_intersection["is_colliding"]:
 			# will count the ray with the least distance to its
 			# start point on the axis it's pointing to
@@ -205,7 +208,7 @@ func ray_array_check(delta: float, space_state: Physics2DDirectSpaceState, expec
 				ray_intersection["contact_point"].x - ray[0].x,
 				ray_intersection["contact_point"].y - ray[0].y
 			)
-			difference *= ray[4].abs()
+			difference *= ray[3].abs()
 			
 			var distance: float = difference.length()
 			if not intersecting or distance < closest_distance:
@@ -220,14 +223,8 @@ func ray_array_check(delta: float, space_state: Physics2DDirectSpaceState, expec
 # the terrain's move transform as well as the character's velocity
 # so basically, it detects what collision *would* happen after both 
 # the character and the terrain get moved
-func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_normal: Vector2, point: Vector2, cast_to: Vector2, origin: Vector2, point_open: Vector2 = Vector2.INF) -> Dictionary:
-	# defaults that are other params isnt supported in godot 3
-	# this is my workaround
-	if point_open == Vector2.INF:
-		point_open = point
-	
+func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_normal: Vector2, point: Vector2, cast_to: Vector2, origin: Vector2) -> Dictionary:
 	var global_point: Vector2 = point + character.global_position
-	var global_point_open: Vector2 = point_open + character.global_position
 	var global_cast_to: Vector2 = cast_to + character.global_position
 	
 	#var predict_mask: Vector2 = expected_normal.abs()
@@ -274,7 +271,7 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 #			working_cast_to = Vector2(cast_to_transform.origin.x, cast_to_transform.origin.y)
 #		else:
 	working_cast_to = global_cast_to
-	working_point = global_point if is_closed else global_point_open
+	working_point = global_point
 	
 	var count: int = polygon.size()
 	var edge_count: int = count if is_closed else count - 1
@@ -283,21 +280,13 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 		var prev: Vector2 = polygon[index]
 		var diff: Vector2 = vertex - prev
 		var normal: Vector2 = Vector2(diff.y, -diff.x).normalized()
-		
-		var edge: PoolVector2Array = ([
-			prev,
-			vertex,
-			normal
-		])
-		
+			
 		if expected_normal != Vector2.ZERO and not edge_from_normal(normal).is_equal_approx(expected_normal):
 			continue
 		
 		var line_intersection: Array = CollisionHelper.get_line_intersection(
-			Vector2(working_point.x, working_point.y),
-			Vector2(working_cast_to.x, working_cast_to.y),
-			Vector2(edge[0].x, edge[0].y),
-			Vector2(edge[1].x, edge[1].y))
+			working_point, working_cast_to,
+			prev, vertex)
 		
 		if line_intersection[0]:
 			#if found_transform == null:
@@ -306,7 +295,7 @@ func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_no
 			var intersection: Dictionary = {
 				"is_colliding": true,
 				"contact_point": line_intersection[1],
-				"edge_normal": edge[2],
+				"edge_normal": normal,
 				"resolution_offset": origin
 			}
 			return intersection
