@@ -2,6 +2,11 @@ class_name CharacterCollision
 extends Node2D
 
 
+const FLOOR_THRESHOLD: float = 0.7
+const GROUND_GRACE: float = 0.5
+# defined in pixels
+const MAX_STEP_DISTANCE: float = 5.0
+
 export var draw_debug: bool
 onready var character: Character = owner
 
@@ -26,9 +31,6 @@ var found_transform = null
 var last_transform = null
 ##
 
-const FLOOR_THRESHOLD: float = 0.7
-const GROUND_GRACE: float = 0.5
-
 
 func edge_from_normal(normal: Vector2) -> Vector2:
 	# if edge is horizontal
@@ -47,11 +49,28 @@ func edge_from_normal(normal: Vector2) -> Vector2:
 
 
 func update_collision(delta: float) -> void:
+	if delta <= 0.0:
+		return
+	
 	var space_state: Physics2DDirectSpaceState = get_world_2d().direct_space_state
 	
 	## PLATFORM TRANSFORMS
 	handle_platform_transforms()
 	
+	## SUBSTEPS
+	var current_speed: float = character.velocity.length()
+	var total_distance: float = current_speed * delta
+	var steps: int = max(1, int(ceil(total_distance / MAX_STEP_DISTANCE)))
+	var sub_delta: float = delta / float(steps)
+	
+	for i in range(steps):
+		update_step(sub_delta, space_state)
+	
+	if draw_debug:
+		update() # redraw
+
+
+func update_step(delta: float, space_state: Physics2DDirectSpaceState) -> void:
 	## RAY CHECKS
 	# snapping further when going down on a slope
 	var slope_offset: float = GROUND_GRACE
@@ -85,9 +104,6 @@ func update_collision(delta: float) -> void:
 	resolved_position = resolve_position(delta, floor_info, resolved_position, Vector2.DOWN)
 	
 	character.position = resolved_position
-	
-	if draw_debug:
-		update() # redraw
 
 
 func handle_platform_transforms() -> void:
