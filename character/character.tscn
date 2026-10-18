@@ -1,11 +1,14 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://character/character.gd" type="Script" id=1]
 [ext_resource path="res://character/components/ray_setup.gd" type="Script" id=2]
-[ext_resource path="res://character/components/collision.gd" type="Script" id=3]
+[ext_resource path="res://character/components/collider.gd" type="Script" id=3]
+[ext_resource path="res://character/states/physics/air.gd" type="Script" id=4]
+[ext_resource path="res://character/states/physics/ground.gd" type="Script" id=5]
 
 [node name="Character" type="KinematicBody2D"]
 script = ExtResource( 1 )
+base_size = Vector2( 12, 27 )
 
 [node name="ColorRect" type="ColorRect" parent="."]
 margin_left = -6.0
@@ -14,12 +17,12 @@ margin_right = 6.0
 
 [node name="Components" type="Node2D" parent="."]
 
-[node name="Collision" type="Node2D" parent="Components"]
+[node name="Collider" type="Node2D" parent="Components"]
 unique_name_in_owner = true
 script = ExtResource( 3 )
 draw_debug = true
 
-[node name="RaySetup" type="Node2D" parent="Components/Collision"]
+[node name="RaySetup" type="Node2D" parent="Components/Collider"]
 script = ExtResource( 2 )
 head_height = 27.0
 body_width = 6.0
@@ -29,3 +32,25 @@ horizontal_casts = 4
 ceiling_corner_width = 2.0
 floor_corner_width = 2.0
 corner_height = 8.0
+
+[node name="PhysicsStates" type="Node" parent="."]
+
+[node name="Air" type="Node" parent="PhysicsStates"]
+script = ExtResource( 4 )
+animation = "fall"
+move_speed = 124.0
+acceleration = 16.0
+overshoot_speed = 0.25
+friction = 2.3
+overshoot_friction = 4.6
+ground_name = "Ground"
+
+[node name="Ground" type="Node" parent="PhysicsStates"]
+script = ExtResource( 5 )
+disable_snap = false
+move_speed = 216.0
+acceleration = 16.0
+turn_speed = 30.0
+overshoot_speed = 3.5
+friction = 27.0
+air_name = "Air"

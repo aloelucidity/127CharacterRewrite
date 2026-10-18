@@ -16,7 +16,7 @@ export var ceiling_corner_width: float
 export var floor_corner_width: float
 export var corner_height: float
 
-var collision: CharacterCollision
+var collision: CharacterCollider
 
 
 func _enter_tree() -> void:

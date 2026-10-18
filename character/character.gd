@@ -2,68 +2,173 @@ class_name Character
 extends KinematicBody2D
 
 
-const move_speed: float = 216.0
-const acceleration: float = 16.0
-const deceleration: float = 30.0
-const friction: float = 27.0
-
-const aerial_acceleration: float = 16.0
-const aerial_friction: float = 2.3
-const max_aerial_velocity: float = 640.0
-
-const GRAVITY: float = 7.82
-
-onready var collision = $"%Collision"
-
+### Basics
 var velocity: Vector2
 var facing_direction: int
+var gravity: float = 7.82
+
+### Attributes
+export var gravity_factor: float = 1
+export var base_size: Vector2
+
+### Nodes
+onready var collider = $"%Collider"
+onready var physics_states = $PhysicsStates
+
+### States
+var physics: PhysicsState
+var action: ActionState
+
+# the below is used for coyote time; when the ground state transitions 
+# to the air state, it'll set an override for a few frames so you
+# can still do ground actions even if you're slightly late
+var container_override: PhysicsState
+var override_frames: int
+
+### Inputs
+enum input_names {
+	left, 
+	right, 
+	jump, 
+	dive, 
+	spin, 
+	gp, 
+	gpcancel, 
+	fludd, 
+	nozzles, 
+	crouch, 
+	interact, 
+	up, 
+	down 
+}
+# First parameter is "pressed",
+# second parameter is "just_pressed", 
+# and third parameter is the input name.
+export var inputs: Array
+
+func update_inputs() -> void:
+	for input in inputs:
+		# previously, they were indexed as input0 and input1 due to 
+		# multiplayer. since it's no longer in the game it just adds 0 now
+		input[0] = Input.is_action_pressed(input[2] + "0")
+		input[1] = Input.is_action_just_pressed(input[2] + "0")
 
 
-func is_grounded() -> bool:
-	return collision.floor_info["is_colliding"]
-
+### Main loop
+func _ready():
+	for input in input_names.keys():
+		inputs.append([false, false, str(input)])
 
 func _physics_process(delta: float):
-	var x_axis: float = Input.get_axis("ui_left", "ui_right")
-	var move_direction: int = int(sign(x_axis))
+	update_inputs()
 	
-	# Horizontal physics
-	if move_direction != 0:
-		if is_grounded():
-			# Accelerate/decelerate
-			if velocity.x * move_direction < 0: #why. just why. you already have the move direction, dingus.
-				velocity.x += deceleration * move_direction
-			elif velocity.x * move_direction < move_speed:
-				velocity.x += acceleration * move_direction
-			elif velocity.x * move_direction > move_speed:
-				velocity.x -= 3.5 * move_direction
-			facing_direction = move_direction
+	handle_general_updates()
+	update_states("physics", physics_states)
+	
+	var container: PhysicsState = physics
+	if override_frames > 0:
+		override_frames -= 1
+		container = container_override
+		if override_frames <= 0: container_override = null
+	
+	update_states("action", container)
+	
+	collider._update(delta)
+
+
+### Collision queries
+func is_grounded() -> bool:
+	return collider.floor_info["is_colliding"]
+
+
+### States
+func set_state(type: String, state: State) -> void:
+	var old_state: State = self[type]
+	if is_instance_valid(old_state):
+		old_state._on_exit()
+	
+	self[type] = state
+	
+	if is_instance_valid(state):
+		state._on_enter()
+
+
+func check_startups(cur_state: State, container: Node) -> State:
+	var cur_priority: int = int(-INF)
+	if is_instance_valid(cur_state): cur_priority = cur_state.priority
+	for check_state in container.get_children():
+		var char_state: State
+		if check_state is State:
+			char_state = check_state
+		elif check_state is StateLink:
+			var link: StateLink = check_state
+			char_state = link.link_to
+		
+		if (
+			char_state.priority > cur_priority
+		) or (
+			char_state.priority >= cur_priority and 
+			cur_state.allow_priority_override
+		):
+			if char_state._startup_check():
+				return char_state
+	return null
+
+
+func handle_general_updates() -> void:
+	if is_instance_valid(physics_states):
+		for phys in physics_states.get_children():
+			phys._general_update()
+			
+			for act in phys.get_children():
+				var action_state: ActionState
+				if act is ActionState:
+					action_state = act
+				elif act is StateLink:
+					var link: StateLink = act
+					action_state = link.link_to
+				action_state._general_update()
+
+
+func update_states(type: String, container: Node) -> void:
+	## handle updates, transitions
+	var cur_state: State = self[type]
+	if is_instance_valid(cur_state):
+		var transition_to: String = cur_state._transition_check()
+		if transition_to == cur_state.name:
+			cur_state._update()
+		elif is_instance_valid(container) and container.has_node(transition_to):
+			var found_node: Node = container.get_node(transition_to)
+			var new_state: State
+			if found_node is State:
+				new_state = found_node
+			elif found_node is StateLink:
+				var link: StateLink = found_node
+				new_state = link.link_to
+			
+			set_state(type, new_state)
 		else:
-			if velocity.x * move_direction < move_speed:
-				velocity.x += aerial_acceleration * move_direction
-			elif velocity.x * move_direction > move_speed:
-				velocity.x -= 0.25 * move_direction
-			facing_direction = move_direction
+			set_state(type, null)
 	
-	else:
-		if abs(velocity.x) > 0:
-			if abs(velocity.x) > 15:
-				var new_velocity
-				if is_grounded():
-					velocity.x -= sign(velocity.x) * friction
-				else:
-					new_velocity = sign(velocity.x) * aerial_friction * (2 if abs(velocity.x) > move_speed else 1)
-					velocity.x -= new_velocity
-			else:
-				velocity.x = 0
-	
-	if not is_grounded():
-		velocity.y += GRAVITY * 2
-	velocity.y = min(velocity.y, max_aerial_velocity)
-	
-	if Input.is_action_just_pressed("ui_accept"):
-		velocity.y = -500
-	elif Input.is_action_just_released("ui_accept"):
-		velocity.y *= 0.63
-	
-	collision.update_collision(delta)
+	## handle startups
+	if is_instance_valid(container):
+		var startup_state: State = check_startups(self[type], container)
+		if is_instance_valid(startup_state):
+			set_state(type, startup_state)
+
+
+### Physics
+func get_gravity_sum() -> float:
+	var total_factor: float = gravity * gravity_factor
+	if is_instance_valid(physics):
+		total_factor *= physics.gravity_factor
+	if is_instance_valid(action):
+		total_factor *= action.gravity_factor
+	return total_factor
+
+func get_size() -> Vector2:
+	if is_instance_valid(action) and action.override_size:
+		return action.custom_size
+	if is_instance_valid(physics) and physics.override_size:
+		return physics.custom_size
+	return base_size

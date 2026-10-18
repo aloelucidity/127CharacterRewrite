@@ -1,4 +1,4 @@
-class_name CharacterCollision
+class_name CharacterCollider
 extends Node2D
 
 
@@ -49,7 +49,7 @@ func edge_from_normal(normal: Vector2) -> Vector2:
 			return Vector2.UP
 
 
-func update_collision(delta: float) -> void:
+func _update(delta: float) -> void:
 	if delta <= 0.0:
 		return
 	
@@ -64,8 +64,8 @@ func update_collision(delta: float) -> void:
 	var steps: int = max(1, int(ceil(total_distance / MAX_STEP_DISTANCE)))
 	var sub_delta: float = delta / float(steps)
 	
-	for i in range(steps):
-		update_step(sub_delta, space_state)
+	for _i in range(steps):
+		_update_step(sub_delta, space_state)
 	
 	last_position = character.global_position
 	
@@ -73,7 +73,7 @@ func update_collision(delta: float) -> void:
 		update() # redraw
 
 
-func update_step(delta: float, space_state: Physics2DDirectSpaceState) -> void:
+func _update_step(delta: float, space_state: Physics2DDirectSpaceState) -> void:
 	## RAY CHECKS
 	# snapping further when going down on a slope
 	var slope_offset: float = COLLISION_GRACE
@@ -130,7 +130,7 @@ func handle_platform_transforms() -> void:
 	found_transform = null
 
 
-func resolve_velocity(delta: float, intersect_info: Dictionary, current_velocity: Vector2, ray_direction: Vector2) -> Vector2:
+func resolve_velocity(_delta: float, intersect_info: Dictionary, current_velocity: Vector2, ray_direction: Vector2) -> Vector2:
 	if not intersect_info["is_colliding"]: 
 		return current_velocity
 	
@@ -223,7 +223,7 @@ func ray_array_check(delta: float, space_state: Physics2DDirectSpaceState, expec
 # the terrain's move transform as well as the character's velocity
 # so basically, it detects what collision *would* happen after both 
 # the character and the terrain get moved
-func ray_check(delta: float, space_state: Physics2DDirectSpaceState, expected_normal: Vector2, point: Vector2, cast_to: Vector2, origin: Vector2) -> Dictionary:
+func ray_check(_delta: float, space_state: Physics2DDirectSpaceState, expected_normal: Vector2, point: Vector2, cast_to: Vector2, origin: Vector2) -> Dictionary:
 	var global_point: Vector2 = point + character.global_position
 	var global_cast_to: Vector2 = cast_to + character.global_position
 	
