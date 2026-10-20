@@ -39,8 +39,15 @@ func _update(_delta: float) -> void:
 	scale = sprite_scale * Vector2(character.facing_direction, 1)
 	speed_scale = anim_speed
 	
+	var preserve_frame: bool = false
 	if is_directional:
+		if cur_anim.begins_with(new_anim):
+			preserve_frame = true
 		new_anim = "%s_%s" % [new_anim, "right" if character.facing_direction > 0 else "left"]
+	
 	if cur_anim != new_anim:
 		cur_anim = new_anim
+		var last_frame: int = frame
 		play(new_anim)
+		if preserve_frame:
+			frame = last_frame

@@ -35,6 +35,8 @@ func _on_enter() -> void:
 		reset_timer = 0
 	## single and double jump
 	else:
+		jump_sequence = min(jump_sequence, max_jumps - 2)
+		
 		animation = jump_animations[jump_sequence]
 		anim_is_directional = jump_is_directional[jump_sequence]
 		
@@ -42,7 +44,6 @@ func _on_enter() -> void:
 		air_physics.animation = fall_animations[jump_sequence]
 		air_physics.anim_is_directional = fall_is_directional[jump_sequence]
 		
-		jump_sequence = min(jump_sequence, max_jumps - 2)
 		character.set_state("physics", air_physics)
 		character.velocity.y = min(-jump_powers[jump_sequence], character.velocity.y)
 	

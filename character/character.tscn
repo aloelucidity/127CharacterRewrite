@@ -27,7 +27,6 @@ script = ExtResource( 11 )
 [node name="Collider" type="Node2D" parent="Components"]
 unique_name_in_owner = true
 script = ExtResource( 3 )
-draw_debug = true
 
 [node name="RaySetup" type="Node2D" parent="Components/Collider"]
 script = ExtResource( 2 )
@@ -55,7 +54,6 @@ ground_name = "Ground"
 
 [node name="Somersault" type="Node" parent="PhysicsStates"]
 script = ExtResource( 9 )
-sprite_skew = null
 move_speed = 216.0
 acceleration = 10.0
 overshoot_speed = 0.25
@@ -92,7 +90,6 @@ max_jumps = 3
 [node name="TripleJumpAction" type="Node" parent="PhysicsStates/Ground"]
 script = ExtResource( 8 )
 animation = "triple_jump"
-sprite_skew = null
 disable_snap = true
 launch_power = 100.0
 jump_power = 495.0
